@@ -200,47 +200,7 @@ function render_mechanic_booking()
         var ajaxurl = '<?php echo admin_url('admin-ajax.php'); ?>';
         var nonce = '<?php echo wp_create_nonce('booking_availability_nonce'); ?>';
         
-        // Genera tutti gli orari disponibili (08:00 - 18:00, ogni 30 minuti)
-        function generateTimeSlots() {
-            var slots = [];
-            for (var h = 8; h <= 17; h++) {
-                for (var m = 0; m < 60; m += 30) {
-                    if (h === 17 && m === 30) break; // Stop at 17:30
-                    var hour = h.toString().padStart(2, '0');
-                    var min = m.toString().padStart(2, '0');
-                    slots.push(hour + ':' + min);
-                }
-            }
-            return slots;
-        }
         
-        // Popola il select dell'ora
-        function populateHourSelect(occupiedSlots) {
-            var $hourSelect = $('#hour');
-            $hourSelect.empty();
-            $hourSelect.append('<option value="">-- Seleziona ora --</option>');
-            
-            var allSlots = generateTimeSlots();
-            occupiedSlots = occupiedSlots || [];
-            
-            allSlots.forEach(function(slot) {
-                var isOccupied = occupiedSlots.indexOf(slot) !== -1;
-                var option = $('<option></option>')
-                    .val(slot)
-                    .text(slot + (isOccupied ? ' (Non disponibile)' : ''));
-                
-                if (isOccupied) {
-                    option.prop('disabled', true);
-                    option.addClass('time-slot-occupied');
-                }
-                
-                $hourSelect.append(option);
-            });
-            
-            $hourSelect.prop('disabled', false);
-        }
-        
-        // Verifica disponibilità quando cambiano data o sede
 
         function checkAvailabilityDate(){
             var place = $('#place').val();
@@ -256,9 +216,6 @@ function render_mechanic_booking()
             }, function(response) {
                 if (response.success) {
                     var datesInfo = response.data.dates_info;
-                    // Puoi usare datesInfo per evidenziare le date con molte prenotazioni
-                    // Ad esempio, potresti disabilitare le date con più di 5 prenotazioni
-                    // o mostrare un messaggio accanto alla data
                 }
             });
         }
