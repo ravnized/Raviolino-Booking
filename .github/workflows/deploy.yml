@@ -24,4 +24,4 @@ jobs:
             **/.git*
             **/.git*/**
             .github/**
-            **/.idea
+            .idea
