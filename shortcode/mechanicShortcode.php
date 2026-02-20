@@ -118,7 +118,7 @@ function get_booking_dates() {
         $dates_info[$date]++;
     }
 
-    error_log('Date info for place ' . $place . ': ' . print_r($dates_info, true));
+    //error_log('Date info for place ' . $place . ': ' . print_r($dates_info, true));
     
     wp_send_json_success(array('dates_info' => $dates_info));
 }
