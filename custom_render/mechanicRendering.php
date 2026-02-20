@@ -14,11 +14,10 @@ function add_meta_box_booking() {
 
 function render_meta_box_booking( $post ) {
     wp_nonce_field( 'booking_save_data', 'booking_nonce' );
-
+    $name = get_post_meta( $post->ID, '_name', true );
     $place = get_post_meta( $post->ID, '_place', true );
     $plate = get_post_meta( $post->ID, '_plate', true );
-    $model = get_post_meta( $post->ID, '_model', true );
-    $type_booking = get_post_meta( $post->ID, '_intervention', true );
+    $type_booking = get_post_meta( $post->ID, '_type_booking', true );
     $date = get_post_meta( $post->ID, '_date', true );
     $hour = get_post_meta( $post->ID, '_hour', true );
     $minutes = get_post_meta( $post->ID, '_minutes', true );
@@ -31,6 +30,9 @@ function render_meta_box_booking( $post ) {
 
     // Disegniamo i campi
     ?>
+    <div 
+
+
     <div class="booking-row">
         <label for="booking_place">Sede Officina:</label>
         <select id="booking_place" name="booking_place">
@@ -65,10 +67,14 @@ function render_meta_box_booking( $post ) {
     </div>
 
     <div class="booking-row">
-        <label for="booking_time">Ora Appuntamento:</label>
-        <input type="time" id="booking_time" name="booking_time" value="<?php echo esc_attr( $hour . ':' . $minutes ); ?>" />
+        <label for="booking_hour">Ora Appuntamento:</label>
+        <input type="time" id="booking_hour" name="booking_hour" value="<?php echo esc_attr( $hour ); ?>" />
     </div>
 
+    <div class="booking-row">
+        <label for="booking_minutes">Durata (minuti):</label>
+        <input type="number" id="booking_minutes" name="booking_minutes" value="<?php echo esc_attr( $minutes ); ?>" min="1" />
+    </div>
     
     <?php
 }
@@ -102,7 +108,14 @@ function save_data_booking( $post_id ) {
     if ( isset( $_POST['booking_type_booking'] ) ) {
         update_post_meta( $post_id, '_type_booking', sanitize_text_field( $_POST['booking_type_booking'] ) );
     }
-    if ( isset( $_POST['booking_date'] ) && isset( $_POST['booking_time'] ) && isset( $_POST['booking_minutes'] ) ) {
-        update_post_meta( $post_id, '_date_time', sanitize_text_field( $_POST['booking_date'] . ' ' . $_POST['booking_time'] . ':' . $_POST['booking_minutes'] ) );
+    
+    if ( isset( $_POST['booking_date'] ) ) {
+        update_post_meta( $post_id, '_date', sanitize_text_field( $_POST['booking_date'] ) );
+    }
+    if ( isset( $_POST['booking_hour'] ) ) {
+        update_post_meta( $post_id, '_hour', sanitize_text_field( $_POST['booking_hour'] ) );
+    }
+    if ( isset( $_POST['booking_minutes'] ) ) {
+        update_post_meta( $post_id, '_minutes', sanitize_text_field( $_POST['booking_minutes'] ) );
     }
 }
