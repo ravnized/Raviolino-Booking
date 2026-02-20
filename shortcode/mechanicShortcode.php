@@ -287,6 +287,7 @@ function render_mechanic_booking()
         
         // Verifica disponibilità quando cambiano data o sede
         function checkAvailability() {
+            console.log('Controllo disponibilità per data e sede');
             var date = $('#date').val();
             var place = $('#place').val();
             
