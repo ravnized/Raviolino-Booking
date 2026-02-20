@@ -197,12 +197,15 @@ function raviolino_booking_is_working_day($date_string) {
     $day_of_week = (int)$date->format('w');
     
     // Controlla se è un giorno chiuso
-    print_r($settings['closed_days']);
+    error_log("Controllo giorno: $day_of_week");
+    error_log("Giorni chiusi: " . implode(', ', (array)$settings['closed_days']));
     if (in_array($day_of_week, (array)$settings['closed_days'])) {
         return false;
     }
     
     // Controlla se è una data festiva
+    error_log("Controllo data: $date_string");
+    error_log("Date chiuse: " . $settings['closed_dates']);
     $closed_dates = array_map('trim', explode(',', $settings['closed_dates']));
     $closed_dates = array_filter($closed_dates);
     
