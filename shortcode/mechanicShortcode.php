@@ -234,7 +234,7 @@ function render_mechanic_booking()
                                 timeSlots.push(hour + ':00');
                                 timeSlots.push(hour + ':30');
                             }
-                            
+                            $('#hour').empty().append('<option value="">-- Seleziona l\'ora --</option>').prop('disabled', false);
                             timeSlots.forEach(function(slot) {
                                 $('#hour').append('<option value="' + slot + '">' + slot + '</option>');
                             });
