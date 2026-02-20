@@ -130,6 +130,57 @@ function get_booking_dates() {
     wp_send_json_success(array('dates_info' => $dates_info));
 }
 
+// AJAX handler per ottenere gli slot orari disponibili
+add_action('wp_ajax_get_time_slots', 'get_time_slots');
+add_action('wp_ajax_nopriv_get_time_slots', 'get_time_slots');
+
+function get_time_slots() {
+    check_ajax_referer('booking_availability_nonce', 'nonce');
+    $date = sanitize_text_field($_POST['date']);
+    $place = sanitize_text_field($_POST['place']);
+    
+    // Ottieni tutti i slot orari disponibili per il giorno
+    $all_slots = raviolino_booking_get_time_slots($date, 30);
+    
+    if (empty($all_slots)) {
+        // Il giorno non è lavorativo
+        wp_send_json_success(array('slots' => array(), 'is_holiday' => true));
+        return;
+    }
+    
+    // Ottieni le prenotazioni per quella data e sede
+    $args = array(
+        'post_type' => 'booking',
+        'posts_per_page' => -1,
+        'meta_query' => array(
+            'relation' => 'AND',
+            array(
+                'key' => '_date',
+                'value' => $date,
+                'compare' => '='
+            ),
+            array(
+                'key' => '_place',
+                'value' => $place,
+                'compare' => '='
+            )
+        )
+    );
+    
+    $bookings = get_posts($args);
+    $booked_slots = array();
+    
+    foreach ($bookings as $booking) {
+        $hour = get_post_meta($booking->ID, '_hour', true);
+        $booked_slots[] = $hour;
+    }
+    
+    // Filtra gli slot disponibili
+    $available_slots = array_diff($all_slots, $booked_slots);
+    
+    wp_send_json_success(array('slots' => array_values($available_slots), 'is_holiday' => false));
+}
+
 function render_mechanic_booking()
 {
     ob_start();
@@ -226,45 +277,33 @@ function render_mechanic_booking()
                 place: place
             }, function(response) {
                 if (response.success) {
-                    var datesInfo = response.data.dates_info;
                     $('#date').prop('disabled', false);
                     $('#date').off('input').on('input', function() {
                         var selectedDate = $(this).val();
-                        var bookingsCount = datesInfo[selectedDate] ? datesInfo[selectedDate]['count'] : 0;
                         
-                        if (bookingsCount == -1) {
-                            alert('La data selezionata è completamente prenotata. Seleziona un\'altra data.');
-                            $(this).val('');
-                            $('#hour').empty().append('<option value="">-- Prima seleziona data e sede --</option>').prop('disabled', true);
-                        } else {
-                            
-                            var startHour = 8;
-                            var endhour1 = 12;
-                            var startHour2 = 14;
-                            var endHour = 18;
-                            var timeSlots = [];
-                            for (var hour = startHour; hour < endhour1; hour++) {
-                                if(!datesInfo[selectedDate]['hours'].includes(hour + ':00')) {
-                                    timeSlots.push(hour + ':00');
-                                }
-                                if(!datesInfo[selectedDate]['hours'].includes(hour + ':30')) {
-                                    timeSlots.push(hour + ':30');
-                                }
-                            }
-                            for (var hour = startHour2; hour < endHour; hour++) {
-                                if(!datesInfo[selectedDate]['hours'].includes(hour + ':00')) {
-                                    timeSlots.push(hour + ':00');
-                                }
-                                if(!datesInfo[selectedDate]['hours'].includes(hour + ':30')) {
-                                    timeSlots.push(hour + ':30');
+                        // Carica gli slot orari disponibili dal server
+                        $.post(ajaxurl, {
+                            action: 'get_time_slots',
+                            nonce: nonce,
+                            date: selectedDate,
+                            place: place
+                        }, function(slotResponse) {
+                            if (slotResponse.success) {
+                                var slots = slotResponse.data.slots;
+                                var isHoliday = slotResponse.data.is_holiday;
+                                
+                                if (isHoliday || slots.length === 0) {
+                                    alert('La data selezionata non è disponibile (giorni festivi, di chiusura o completamente prenotata). Seleziona un\'altra data.');
+                                    $('#date').val('');
+                                    $('#hour').empty().append('<option value="">-- Prima seleziona data e sede --</option>').prop('disabled', true);
+                                } else {
+                                    $('#hour').empty().append('<option value="">-- Seleziona l\'ora --</option>').prop('disabled', false);
+                                    slots.forEach(function(slot) {
+                                        $('#hour').append('<option value="' + slot + '">' + slot + '</option>');
+                                    });
                                 }
                             }
-                            
-                            $('#hour').empty().append('<option value="">-- Seleziona l\'ora --</option>').prop('disabled', false);
-                            timeSlots.forEach(function(slot) {
-                                $('#hour').append('<option value="' + slot + '">' + slot + '</option>');
-                            });
-                        }
+                        });
                     });
                 }
 
@@ -274,20 +313,9 @@ function render_mechanic_booking()
         // Event listeners
         $('#place').on('change', checkAvailabilityDate);
         
-        // Disabilita le domeniche e le date passate
+        // Disabilita le date passate
         var today = new Date().toISOString().split('T')[0];
         $('#date').attr('min', today);
-        
-        $('#date').on('input', function() {
-            var selectedDate = new Date($(this).val());
-            var day = selectedDate.getDay();
-            
-            // Se è domenica (0), mostra alert e resetta
-            if (day === 0) {
-                alert('La domenica l\'officina è chiusa. Seleziona un altro giorno.');
-                $(this).val('');
-            }
-        });
         
         // Gestione submit del form via AJAX
         $('#booking-form').on('submit', function(e) {

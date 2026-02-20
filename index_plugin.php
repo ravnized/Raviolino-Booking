@@ -21,6 +21,7 @@ function log_message($message) {
 require_once plugin_dir_path(__FILE__) . 'custom_types/mechanicBooking.php';
 require_once plugin_dir_path(__FILE__) . 'custom_render/mechanicRendering.php';
 require_once plugin_dir_path(__FILE__) . 'shortcode/mechanicShortcode.php';
+require_once plugin_dir_path(__FILE__) . 'admin/adminSettings.php';
 
 
 add_action( 'init', 'register_booking' );
