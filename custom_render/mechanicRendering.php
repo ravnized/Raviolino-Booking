@@ -24,34 +24,34 @@ function render_meta_box_booking( $post ) {
     $minutes = get_post_meta( $post->ID, '_minutes', true );
 
    echo '<style>
-        .raviolino-row { margin-bottom: 15px; }
-        .raviolino-row label { display: inline-block; width: 150px; font-weight: bold; }
-        .raviolino-row input, .raviolino-row select { width: 100%; max-width: 300px; padding: 5px; }
+        .booking-row { margin-bottom: 15px; }
+        .booking-row label { display: inline-block; width: 150px; font-weight: bold; }
+        .booking-row input, .booking-row select { width: 100%; max-width: 300px; padding: 5px; }
     </style>';
 
     // Disegniamo i campi
     ?>
-    <div class="raviolino-row">
-        <label for="raviolino_place">Sede Officina:</label>
-        <select id="raviolino_place" name="raviolino_place">
+    <div class="booking-row">
+        <label for="booking_place">Sede Officina:</label>
+        <select id="booking_place" name="booking_place">
             <option value="Cerro Maggiore" <?php selected( $place, 'Cerro Maggiore' ); ?>>Cerro Maggiore</option>
             <option value="Cantalupo" <?php selected( $place, 'Cantalupo' ); ?>>Cantalupo</option>
         </select>
     </div>
 
-    <div class="raviolino-row">
-        <label for="raviolino_plate">Targa:</label>
-        <input type="text" id="raviolino_plate" name="raviolino_plate" value="<?php echo esc_attr( $plate ); ?>" placeholder="es. AB123CD" />
+    <div class="booking-row">
+        <label for="booking_plate">Targa:</label>
+        <input type="text" id="booking_plate" name="booking_plate" value="<?php echo esc_attr( $plate ); ?>" placeholder="es. AB123CD" />
     </div>
 
-    <div class="raviolino-row">
-        <label for="raviolino_model">Modello Auto:</label>
-        <input type="text" id="raviolino_model" name="raviolino_model" value="<?php echo esc_attr( $model ); ?>" placeholder="es. Fiat Panda" />
+    <div class="booking-row">
+        <label for="booking_model">Modello Auto:</label>
+        <input type="text" id="booking_model" name="booking_model" value="<?php echo esc_attr( $model ); ?>" placeholder="es. Fiat Panda" />
     </div>
 
-    <div class="raviolino-row">
-        <label for="raviolino_intervento">Tipo Intervento:</label>
-        <select id="raviolino_intervento" name="raviolino_intervento">
+    <div class="booking-row">
+        <label for="booking_type_booking">Tipo Intervento:</label>
+        <select id="booking_type_booking" name="booking_type_booking">
             <option value="Tagliando" <?php selected( $type_booking, 'Tagliando' ); ?>>Tagliando</option>
             <option value="Cambio Gomme" <?php selected( $type_booking, 'Cambio Gomme' ); ?>>Cambio Gomme</option>
             <option value="Revisione" <?php selected( $type_booking, 'Revisione' ); ?>>Revisione</option>
@@ -59,14 +59,14 @@ function render_meta_box_booking( $post ) {
         </select>
     </div>
 
-    <div class="raviolino-row">
-        <label for="raviolino_date">Data Appuntamento:</label>
-        <input type="date" id="raviolino_date" name="raviolino_date" value="<?php echo esc_attr( $date ); ?>" />\
+    <div class="booking-row">
+        <label for="booking_date">Data Appuntamento:</label>
+        <input type="date" id="booking_date" name="booking_date" value="<?php echo esc_attr( $date ); ?>" />
     </div>
 
-    <div class="raviolino-row">
-        <label for="raviolino_time">Ora Appuntamento:</label>
-        <input type="time" id="raviolino_time" name="raviolino_time" value="<?php echo esc_attr( $hour . ':' . $minutes ); ?>" />
+    <div class="booking-row">
+        <label for="booking_time">Ora Appuntamento:</label>
+        <input type="time" id="booking_time" name="booking_time" value="<?php echo esc_attr( $hour . ':' . $minutes ); ?>" />
     </div>
 
     
@@ -90,19 +90,19 @@ function save_data_booking( $post_id ) {
         return;
     }
     
-    if ( isset( $_POST['place'] ) ) {
-        update_post_meta( $post_id, '_place', sanitize_text_field( $_POST['place'] ) );
+    if ( isset( $_POST['booking_place'] ) ) {
+        update_post_meta( $post_id, '_place', sanitize_text_field( $_POST['booking_place'] ) );
     }
-    if ( isset( $_POST['_plate'] ) ) {
-        update_post_meta( $post_id, '_plate', sanitize_text_field( $_POST['_plate'] ) );
+    if ( isset( $_POST['booking_plate'] ) ) {
+        update_post_meta( $post_id, '_plate', sanitize_text_field( $_POST['booking_plate'] ) );
     }
-    if ( isset( $_POST['_model'] ) ) {
-        update_post_meta( $post_id, '_model', sanitize_text_field( $_POST['_model'] ) );
+    if ( isset( $_POST['booking_model'] ) ) {
+        update_post_meta( $post_id, '_model', sanitize_text_field( $_POST['booking_model'] ) );
     }
-    if ( isset( $_POST['_type_booking'] ) ) {
-        update_post_meta( $post_id, '_type_booking', sanitize_text_field( $_POST['_type_booking'] ) );
+    if ( isset( $_POST['booking_type_booking'] ) ) {
+        update_post_meta( $post_id, '_type_booking', sanitize_text_field( $_POST['booking_type_booking'] ) );
     }
-    if ( isset( $_POST['_date'] ) && isset( $_POST['_time'] ) && isset( $_POST['_minutes'] ) ) {
-        update_post_meta( $post_id, '_date_time', sanitize_text_field( $_POST['_date'] . ' ' . $_POST['_time'] . ':' . $_POST['_minutes'] ) );
+    if ( isset( $_POST['booking_date'] ) && isset( $_POST['booking_time'] ) && isset( $_POST['booking_minutes'] ) ) {
+        update_post_meta( $post_id, '_date_time', sanitize_text_field( $_POST['booking_date'] . ' ' . $_POST['booking_time'] . ':' . $_POST['booking_minutes'] ) );
     }
 }
