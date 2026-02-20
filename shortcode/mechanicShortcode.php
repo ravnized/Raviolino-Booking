@@ -63,7 +63,7 @@ function ajax_save_booking() {
     }
 
     $booking_data = array(
-        'post_title' => 'Booking #' . $id . ' - ' . $name . ' - ' . date('d M Y', strtotime($date))  . ' ' . $hour . ': ' . $minutes,
+        'post_title' => 'Booking #' . $id . ' - ' . $name . ' - ' . date('d M Y', strtotime($date))  . ' ' . $hour,
         'post_type' => 'booking',
         'post_status' => 'publish',
     );
@@ -77,7 +77,6 @@ function ajax_save_booking() {
         update_post_meta($booking_id, '_type_booking', $type_booking);
         update_post_meta($booking_id, '_date', $date);
         update_post_meta($booking_id, '_hour', $hour);
-        update_post_meta($booking_id, '_minutes', $minutes);
 
         wp_send_json_success(array('message' => 'Prenotazione salvata con successo!'));
     } else {

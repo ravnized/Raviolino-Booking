@@ -21,7 +21,6 @@ function render_meta_box_booking( $post ) {
     $type_booking = get_post_meta( $post->ID, '_type_booking', true );
     $date = get_post_meta( $post->ID, '_date', true );
     $hour = get_post_meta( $post->ID, '_hour', true );
-    $minutes = get_post_meta( $post->ID, '_minutes', true );
 
    echo '<style>
         .booking-row { margin-bottom: 15px; }
@@ -71,12 +70,7 @@ function render_meta_box_booking( $post ) {
 
     <div class="booking-row">
         <label for="booking_hour">Ora Appuntamento:</label>
-        <input type="text" id="booking_hour" name="booking_hour" value="<?php echo esc_attr( $hour ); ?>" placeholder="es. 10" />
-    </div>
-
-    <div class="booking-row">
-        <label for="booking_minutes">Minuti:</label>
-        <input type="number" id="booking_minutes" name="booking_minutes" value="<?php echo esc_attr( $minutes ); ?>" min="0" max="59" />
+        <input type="text" id="booking_hour" name="booking_hour" value="<?php echo esc_attr( $hour ); ?>" placeholder="es. 10:30" />
     </div>
     
     <?php
@@ -119,7 +113,6 @@ function save_data_booking( $post_id ) {
     if ( isset( $_POST['booking_hour'] ) ) {
         update_post_meta( $post_id, '_hour', sanitize_text_field( $_POST['booking_hour'] ) );
     }
-    if ( isset( $_POST['booking_minutes'] ) ) {
-        update_post_meta( $post_id, '_minutes', sanitize_text_field( $_POST['booking_minutes'] ) );
-    }
+
+    
 }
