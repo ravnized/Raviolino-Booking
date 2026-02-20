@@ -141,7 +141,7 @@ function render_mechanic_booking()
         .time-slot-occupied { background: #ffcccc !important; color: #cc0000 !important; }
         .loading-message { color: #0073aa; font-style: italic; }
     </style>
-
+    
     <div class="booking-form-box">
         <form action="" method="POST">
             <?php wp_nonce_field('save_booking_front', 'nonce_front'); ?>
@@ -191,7 +191,10 @@ function render_mechanic_booking()
             <button type="submit" name="booking_submit" class="booking-btn">Richiedi Appuntamento</button>
         </form>
     </div>
-
+        <script
+			  src="https://code.jquery.com/jquery-4.0.0.min.js"
+			  integrity="sha256-OaVG6prZf4v69dPg6PhVattBXkcOWQB62pdZ3ORyrao="
+			  crossorigin="anonymous"></script>
     <script>
     jQuery(document).ready(function($) {
         var ajaxurl = '<?php echo admin_url('admin-ajax.php'); ?>';
