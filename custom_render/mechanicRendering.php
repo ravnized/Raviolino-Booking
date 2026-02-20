@@ -32,6 +32,11 @@ function render_meta_box_booking( $post ) {
     // Disegniamo i campi
     ?>
     <div class="booking-row">
+        <label for="booking_id">ID Prenotazione:</label>
+        <input type="text" id="booking_id" value="<?php echo esc_attr( $id ); ?>" readonly />
+    </div>
+
+    <div class="booking-row">
         <label for="booking_name">Nome Cliente:</label>
         <input type="text" id="booking_name" name="booking_name" value="<?php echo esc_attr( $name ); ?>" placeholder="es. Mario Rossi" />
     </div>

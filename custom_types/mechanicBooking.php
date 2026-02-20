@@ -19,7 +19,7 @@ function register_booking() {
         'show_ui'       => true,
         'menu_position' => 20,
         'menu_icon'     => 'dashicons-calendar-alt',
-        'supports'      => array( 'title' ),
+        'supports'      => array(),
         'has_archive'   => false,
     );
 
