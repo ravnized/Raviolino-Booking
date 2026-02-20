@@ -18,10 +18,9 @@ function log_message($message) {
         error_log($message);
     }
 }
-
-
-//import custom types from the custom_types folder and the functions from the functions folder
 require_once plugin_dir_path(__FILE__) . 'custom_types/mechanicBooking.php';
+require_once plugin_dir_path(__FILE__) . 'custom_render/mechanicRendering.php';
+require_once plugin_dir_path(__FILE__) . 'shortcode/mechanicShortcode.php';
 
 
 add_action( 'init', 'register_booking' );
@@ -29,7 +28,7 @@ add_action( 'init', 'register_booking' );
 // log message 
 log_message('Raviolino-Booking plugin loaded successfully.');
 
-require_once plugin_dir_path(__FILE__) . 'custom_render/mechanicRendering.php';
+
 
 
 
