@@ -197,6 +197,7 @@ function raviolino_booking_is_working_day($date_string) {
     $day_of_week = (int)$date->format('w');
     
     // Controlla se è un giorno chiuso
+    print_r($settings['closed_days']);
     if (in_array($day_of_week, (array)$settings['closed_days'])) {
         return false;
     }
