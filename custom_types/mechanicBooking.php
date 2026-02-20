@@ -25,3 +25,9 @@ function register_booking() {
 
     register_post_type( 'booking', $args );
 }
+
+add_action( 'init', 'disable_booking_editor_fields', 20 );
+function disable_booking_editor_fields() {
+    remove_post_type_support( 'booking', 'title' );
+    remove_post_type_support( 'booking', 'editor' );    
+}
