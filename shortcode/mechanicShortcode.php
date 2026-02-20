@@ -9,7 +9,6 @@ add_action('wp_ajax_nopriv_save_booking', 'ajax_save_booking');
 
 function ajax_save_booking() {
     check_ajax_referer('booking_availability_nonce', 'nonce');
-    $id = uniqid();
     $name = sanitize_text_field($_POST['name']);
     $place = sanitize_text_field($_POST['place']);
     $plate = sanitize_text_field($_POST['plate']);
@@ -63,7 +62,7 @@ function ajax_save_booking() {
     }
 
     $booking_data = array(
-        'post_title' => 'Booking #' . $id . ' - ' . $name . ' - ' . format_date_i18n('d M Y', strtotime($date)) . ' ' . $hour,
+        'post_title' => 'Booking ' . $name . ' - ' . format_date_i18n('d M Y', strtotime($date)) . ' ' . $hour . ':' . str_pad($minutes, 2, '0', STR_PAD_LEFT),
         'post_type' => 'booking',
         'post_status' => 'publish',
     );
