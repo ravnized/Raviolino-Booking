@@ -14,6 +14,7 @@ function add_meta_box_booking() {
 
 function render_meta_box_booking( $post ) {
     wp_nonce_field( 'booking_save_data', 'booking_nonce' );
+    $id = $post->ID;
     $name = get_post_meta( $post->ID, '_name', true );
     $place = get_post_meta( $post->ID, '_place', true );
     $plate = get_post_meta( $post->ID, '_plate', true );
@@ -30,8 +31,10 @@ function render_meta_box_booking( $post ) {
 
     // Disegniamo i campi
     ?>
-    <div 
-
+    <div class="booking-row">
+        <label for="booking_name">Nome Cliente:</label>
+        <input type="text" id="booking_name" name="booking_name" value="<?php echo esc_attr( $name ); ?>" placeholder="es. Mario Rossi" />
+    </div>
 
     <div class="booking-row">
         <label for="booking_place">Sede Officina:</label>

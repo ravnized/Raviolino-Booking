@@ -9,7 +9,7 @@ add_action('wp_ajax_nopriv_save_booking', 'ajax_save_booking');
 
 function ajax_save_booking() {
     check_ajax_referer('booking_availability_nonce', 'nonce');
-    
+    $id = sanitize_text_field($_POST['id']);
     $name = sanitize_text_field($_POST['name']);
     $place = sanitize_text_field($_POST['place']);
     $plate = sanitize_text_field($_POST['plate']);
@@ -63,7 +63,7 @@ function ajax_save_booking() {
     }
 
     $booking_data = array(
-        'post_title' => $name,
+        'post_title' => 'Booking #' . $id . ' - ' . $name . ' - ' . $date,
         'post_type' => 'booking',
         'post_status' => 'publish',
     );
@@ -71,6 +71,7 @@ function ajax_save_booking() {
     $booking_id = wp_insert_post($booking_data);
 
     if ($booking_id) {
+        update_post_meta($booking_id, '_name', $name);
         update_post_meta($booking_id, '_place', $place);
         update_post_meta($booking_id, '_plate', $plate);
         update_post_meta($booking_id, '_type_booking', $type_booking);
