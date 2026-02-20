@@ -178,7 +178,7 @@ function render_mechanic_booking()
 
             <div class="booking-form-group">
                 <label for="date">Data Appuntamento *</label>
-                <input type="date" id="date" name="date" required min="<?php echo date('Y-m-d'); ?>">
+                <input type="date" id="date" name="date" required min="<?php echo date('Y-m-d'); ?>" disabled>
             </div>
             
             <div class="booking-form-group">
