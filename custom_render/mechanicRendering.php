@@ -98,6 +98,10 @@ function save_data_booking( $post_id ) {
     if ( ! current_user_can( 'edit_post', $post_id ) ) {
         return;
     }
+
+    if( isset( $_POST['booking_name'] ) ) {
+        update_post_meta( $post_id, '_name', sanitize_text_field( $_POST['booking_name'] ) );
+    }
     
     if ( isset( $_POST['booking_place'] ) ) {
         update_post_meta( $post_id, '_place', sanitize_text_field( $_POST['booking_place'] ) );
