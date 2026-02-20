@@ -1,5 +1,18 @@
 <?php
 
+// Aggiungi la pagina di impostazioni del plugin al menu di amministrazione
+add_action('admin_menu', 'booking_add_admin_page');
+function booking_add_admin_page() {
+    add_submenu_page(
+        'edit.php?post_type=booking',
+        'Impostazioni',
+        'Impostazioni',
+        'manage_options',
+        'booking_settings',
+        'booking_render_settings_page'
+    );
+}
+
 // Registra le impostazioni
 add_action('admin_init', 'booking_register_settings');
 function booking_register_settings() {
