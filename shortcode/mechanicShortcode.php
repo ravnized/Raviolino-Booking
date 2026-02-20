@@ -3,56 +3,6 @@
 
 add_shortcode('mechanic_booking', 'render_mechanic_booking');
 
-// AJAX handler per verificare disponibilità
-add_action('wp_ajax_check_booking_availability', 'check_booking_availability');
-add_action('wp_ajax_nopriv_check_booking_availability', 'check_booking_availability');
-
-function check_booking_availability() {
-    check_ajax_referer('booking_availability_nonce', 'nonce');
-    
-    $date = sanitize_text_field($_POST['date']);
-    $place = sanitize_text_field($_POST['place']);
-    
-    // Query per trovare tutte le prenotazioni per quella data e sede
-    $args = array(
-        'post_type' => 'booking',
-        'posts_per_page' => -1,
-        'meta_query' => array(
-            'relation' => 'AND',
-            array(
-                'key' => '_date',
-                'value' => $date,
-                'compare' => '='
-            ),
-            array(
-                'key' => '_place',
-                'value' => $place,
-                'compare' => '='
-            )
-        )
-    );
-    
-    $bookings = get_posts($args);
-    $occupied_slots = array();
-    
-    foreach ($bookings as $booking) {
-        $hour = get_post_meta($booking->ID, '_hour', true);
-        $minutes = intval(get_post_meta($booking->ID, '_minutes', true));
-        
-        // Calcola tutti gli slot occupati in base alla durata
-        $start_time = strtotime($hour);
-        $end_time = $start_time + ($minutes * 60);
-        
-        // Genera tutti gli slot di 30 minuti occupati
-        $current = $start_time;
-        while ($current < $end_time) {
-            $occupied_slots[] = date('H:i', $current);
-            $current += 1800; // 30 minuti
-        }
-    }
-    
-    wp_send_json_success(array('occupied_slots' => array_unique($occupied_slots)));
-}
 
 // AJAX handler per ottenere le date con prenotazioni
 add_action('wp_ajax_get_booking_dates', 'get_booking_dates');
@@ -87,6 +37,8 @@ function get_booking_dates() {
         }
         $dates_info[$date]++;
     }
+
+    error_log('Date info for place ' . $place . ': ' . print_r($dates_info, true));
     
     wp_send_json_success(array('dates_info' => $dates_info));
 }
@@ -286,45 +238,34 @@ function render_mechanic_booking()
         }
         
         // Verifica disponibilità quando cambiano data o sede
-        function checkAvailability() {
-            console.log('Controllo disponibilità per data e sede');
-            var date = $('#date').val();
+
+        function checkAvailabilityDate(){
             var place = $('#place').val();
-            
-            if (!date || !place) {
-                $('#hour').prop('disabled', true).empty()
-                    .append('<option value="">-- Prima seleziona data e sede --</option>');
+            if (!place) {
+                $('#hour').empty().append('<option value="">-- Prima seleziona la sede --</option>').prop('disabled', true);
                 return;
             }
             
-            // Mostra loading
-            $('#hour').prop('disabled', true).empty()
-                .append('<option value="">Caricamento...</option>');
-            
-            $.ajax({
-                url: ajaxurl,
-                type: 'POST',
-                data: {
-                    action: 'check_booking_availability',
-                    nonce: nonce,
-                    date: date,
-                    place: place
-                },
-                success: function(response) {
-                    if (response.success) {
-                        populateHourSelect(response.data.occupied_slots);
-                    } else {
-                        alert('Errore nel caricamento degli orari disponibili');
-                    }
-                },
-                error: function() {
-                    alert('Errore di comunicazione con il server');
+            $.post(ajaxurl, {
+                action: 'get_booking_dates',
+                nonce: nonce,
+                place: place
+            }, function(response) {
+                if (response.success) {
+                    var datesInfo = response.data.dates_info;
+                    // Puoi usare datesInfo per evidenziare le date con molte prenotazioni
+                    // Ad esempio, potresti disabilitare le date con più di 5 prenotazioni
+                    // o mostrare un messaggio accanto alla data
                 }
             });
         }
+
+
+
+        
         
         // Event listeners
-        $('#date, #place').on('change', checkAvailability);
+        $('#place').on('change', checkAvailabilityDate);
         
         // Disabilita le domeniche e le date passate
         var today = new Date().toISOString().split('T')[0];
