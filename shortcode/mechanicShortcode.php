@@ -118,7 +118,7 @@ function get_booking_dates() {
         }
         
         if (!isset($dates_info[$date]['hours'])) {
-            $dates_info[$date]['hours'] = array();
+            $dates_info[$date]['hours'] = [];
         }
         $dates_info[$date]['hours'][] = $hour;
         $dates_info[$date]['count'] = isset($dates_info[$date]['count']) ? $dates_info[$date]['count'] + 1 : 1;
