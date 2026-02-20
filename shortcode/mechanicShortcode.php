@@ -216,9 +216,37 @@ function render_mechanic_booking()
             }, function(response) {
                 if (response.success) {
                     var datesInfo = response.data.dates_info;
+                    $('#date').prop('disabled', false);
+                    $('#date').off('input').on('input', function() {
+                        var selectedDate = $(this).val();
+                        var bookingsCount = datesInfo[selectedDate] || 0;
+                        
+                        if (bookingsCount == -1) {
+                            alert('La data selezionata è completamente prenotata. Seleziona un\'altra data.');
+                            $(this).val('');
+                            $('#hour').empty().append('<option value="">-- Prima seleziona data e sede --</option>').prop('disabled', true);
+                        } else {
+                            
+                            var startHour = 8;
+                            var endHour = 18;
+                            var timeSlots = [];
+                            for (var hour = startHour; hour < endHour; hour++) {
+                                timeSlots.push(hour + ':00');
+                                timeSlots.push(hour + ':30');
+                            }
+                            
+                            timeSlots.forEach(function(slot) {
+                                $('#hour').append('<option value="' + slot + '">' + slot + '</option>');
+                            });
+                        }
+                    });
                 }
+
             });
         }
+
+
+
 
 
 
