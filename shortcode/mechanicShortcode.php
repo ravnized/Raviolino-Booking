@@ -114,12 +114,10 @@ function get_booking_dates() {
         $hour = get_post_meta($booking->ID, '_hour', true);
         
         if (!isset($dates_info[$date])) {
-            $dates_info[$date] = 0;
+            $dates_info[$date] = array('count' => 0, 'hours' => array());
         }
         
-        if (!isset($dates_info[$date]['hours'])) {
-            $dates_info[$date]['hours'] = [];
-        }
+        
         $dates_info[$date]['hours'][] = $hour;
         $dates_info[$date]['count'] = isset($dates_info[$date]['count']) ? $dates_info[$date]['count'] + 1 : 1;
         if ($dates_info[$date]['count'] >= 20) {
