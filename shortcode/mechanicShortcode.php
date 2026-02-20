@@ -114,7 +114,7 @@ function get_booking_dates() {
         $hour = get_post_meta($booking->ID, '_hour', true);
         
         if (!isset($dates_info[$date])) {
-            $dates_info[$date] = array('count' => 0, 'hours' => array());
+            $dates_info[$date] = array();
         }
         
         
@@ -125,7 +125,7 @@ function get_booking_dates() {
         }
     }
 
-    //error_log('Date info for place ' . $place . ': ' . print_r($dates_info, true));
+    error_log('Date info for place ' . $place . ': ' . print_r($dates_info, true));
     
     wp_send_json_success(array('dates_info' => $dates_info));
 }
