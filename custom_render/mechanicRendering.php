@@ -1,0 +1,108 @@
+<?php
+
+add_action( 'add_meta_boxes', 'add_meta_box_booking' );
+function add_meta_box_booking() {
+    add_meta_box(
+        'booking_details',       
+        'Booking Details',        
+        'render_meta_box_booking',
+        'appuntamento',                         
+        'normal',                                
+        'high'                                   
+    );
+}
+
+function render_meta_box_booking( $post ) {
+    wp_nonce_field( 'booking_save_data', 'booking_nonce' );
+
+    $place = get_post_meta( $post->ID, '_place', true );
+    $plate = get_post_meta( $post->ID, '_plate', true );
+    $model = get_post_meta( $post->ID, '_model', true );
+    $type_booking = get_post_meta( $post->ID, '_intervention', true );
+    $date = get_post_meta( $post->ID, '_date', true );
+    $hour = get_post_meta( $post->ID, '_hour', true );
+    $minutes = get_post_meta( $post->ID, '_minutes', true );
+
+   echo '<style>
+        .raviolino-row { margin-bottom: 15px; }
+        .raviolino-row label { display: inline-block; width: 150px; font-weight: bold; }
+        .raviolino-row input, .raviolino-row select { width: 100%; max-width: 300px; padding: 5px; }
+    </style>';
+
+    // Disegniamo i campi
+    ?>
+    <div class="raviolino-row">
+        <label for="raviolino_place">Sede Officina:</label>
+        <select id="raviolino_place" name="raviolino_place">
+            <option value="Cerro Maggiore" <?php selected( $place, 'Cerro Maggiore' ); ?>>Cerro Maggiore</option>
+            <option value="Cantalupo" <?php selected( $place, 'Cantalupo' ); ?>>Cantalupo</option>
+        </select>
+    </div>
+
+    <div class="raviolino-row">
+        <label for="raviolino_plate">Targa:</label>
+        <input type="text" id="raviolino_plate" name="raviolino_plate" value="<?php echo esc_attr( $plate ); ?>" placeholder="es. AB123CD" />
+    </div>
+
+    <div class="raviolino-row">
+        <label for="raviolino_model">Modello Auto:</label>
+        <input type="text" id="raviolino_model" name="raviolino_model" value="<?php echo esc_attr( $model ); ?>" placeholder="es. Fiat Panda" />
+    </div>
+
+    <div class="raviolino-row">
+        <label for="raviolino_intervento">Tipo Intervento:</label>
+        <select id="raviolino_intervento" name="raviolino_intervento">
+            <option value="Tagliando" <?php selected( $type_booking, 'Tagliando' ); ?>>Tagliando</option>
+            <option value="Cambio Gomme" <?php selected( $type_booking, 'Cambio Gomme' ); ?>>Cambio Gomme</option>
+            <option value="Revisione" <?php selected( $type_booking, 'Revisione' ); ?>>Revisione</option>
+            <option value="Riparazione Meccanica" <?php selected( $type_booking, 'Riparazione Meccanica' ); ?>>Riparazione Meccanica</option>
+        </select>
+    </div>
+
+    <div class="raviolino-row">
+        <label for="raviolino_date">Data Appuntamento:</label>
+        <input type="date" id="raviolino_date" name="raviolino_date" value="<?php echo esc_attr( $date ); ?>" />\
+    </div>
+
+    <div class="raviolino-row">
+        <label for="raviolino_time">Ora Appuntamento:</label>
+        <input type="time" id="raviolino_time" name="raviolino_time" value="<?php echo esc_attr( $hour . ':' . $minutes ); ?>" />
+    </div>
+
+    
+    <?php
+}
+
+
+add_action( 'save_post', 'save_data_booking' );
+function save_data_booking( $post_id ) {
+    
+    if ( ! isset( $_POST['booking_nonce'] ) || ! wp_verify_nonce( $_POST['booking_nonce'], 'booking_save_data' ) ) {
+        return;
+    }
+
+    
+    if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+        return;
+    }
+
+    if ( ! current_user_can( 'edit_post', $post_id ) ) {
+        return;
+    }
+    
+    if ( isset( $_POST['place'] ) ) {
+        update_post_meta( $post_id, '_place', sanitize_text_field( $_POST['place'] ) );
+    }
+    if ( isset( $_POST['_plate'] ) ) {
+        update_post_meta( $post_id, '_plate', sanitize_text_field( $_POST['_plate'] ) );
+    }
+    if ( isset( $_POST['_model'] ) ) {
+        update_post_meta( $post_id, '_model', sanitize_text_field( $_POST['_model'] ) );
+    }
+    if ( isset( $_POST['_type_booking'] ) ) {
+        update_post_meta( $post_id, '_type_booking', sanitize_text_field( $_POST['_type_booking'] ) );
+    }
+    if ( isset( $_POST['_date'] ) && isset( $_POST['_time'] ) && isset( $_POST['_minutes'] ) ) {
+        update_post_meta( $post_id, '_date_time', sanitize_text_field( $_POST['_date'] . ' ' . $_POST['_time'] . ':' . $_POST['_minutes'] ) );
+    }
+}

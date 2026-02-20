@@ -28,3 +28,8 @@ add_action( 'init', 'register_booking' );
 
 // log message 
 log_message('Raviolino-Booking plugin loaded successfully.');
+
+require_once plugin_dir_path(__FILE__) . 'custom_render/mechanicRendering.php';
+
+
+
