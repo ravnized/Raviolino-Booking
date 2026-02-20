@@ -3,6 +3,94 @@
 
 add_shortcode('mechanic_booking', 'render_mechanic_booking');
 
+// AJAX handler per verificare disponibilità
+add_action('wp_ajax_check_booking_availability', 'check_booking_availability');
+add_action('wp_ajax_nopriv_check_booking_availability', 'check_booking_availability');
+
+function check_booking_availability() {
+    check_ajax_referer('booking_availability_nonce', 'nonce');
+    
+    $date = sanitize_text_field($_POST['date']);
+    $place = sanitize_text_field($_POST['place']);
+    
+    // Query per trovare tutte le prenotazioni per quella data e sede
+    $args = array(
+        'post_type' => 'booking',
+        'posts_per_page' => -1,
+        'meta_query' => array(
+            'relation' => 'AND',
+            array(
+                'key' => '_date',
+                'value' => $date,
+                'compare' => '='
+            ),
+            array(
+                'key' => '_place',
+                'value' => $place,
+                'compare' => '='
+            )
+        )
+    );
+    
+    $bookings = get_posts($args);
+    $occupied_slots = array();
+    
+    foreach ($bookings as $booking) {
+        $hour = get_post_meta($booking->ID, '_hour', true);
+        $minutes = intval(get_post_meta($booking->ID, '_minutes', true));
+        
+        // Calcola tutti gli slot occupati in base alla durata
+        $start_time = strtotime($hour);
+        $end_time = $start_time + ($minutes * 60);
+        
+        // Genera tutti gli slot di 30 minuti occupati
+        $current = $start_time;
+        while ($current < $end_time) {
+            $occupied_slots[] = date('H:i', $current);
+            $current += 1800; // 30 minuti
+        }
+    }
+    
+    wp_send_json_success(array('occupied_slots' => array_unique($occupied_slots)));
+}
+
+// AJAX handler per ottenere le date con prenotazioni
+add_action('wp_ajax_get_booking_dates', 'get_booking_dates');
+add_action('wp_ajax_nopriv_get_booking_dates', 'get_booking_dates');
+
+function get_booking_dates() {
+    check_ajax_referer('booking_availability_nonce', 'nonce');
+    
+    $place = sanitize_text_field($_POST['place']);
+    
+    // Query per trovare tutte le prenotazioni per quella sede
+    $args = array(
+        'post_type' => 'booking',
+        'posts_per_page' => -1,
+        'meta_query' => array(
+            array(
+                'key' => '_place',
+                'value' => $place,
+                'compare' => '='
+            )
+        )
+    );
+    
+    $bookings = get_posts($args);
+    $dates_info = array();
+    
+    foreach ($bookings as $booking) {
+        $date = get_post_meta($booking->ID, '_date', true);
+        
+        if (!isset($dates_info[$date])) {
+            $dates_info[$date] = 0;
+        }
+        $dates_info[$date]++;
+    }
+    
+    wp_send_json_success(array('dates_info' => $dates_info));
+}
+
 function render_mechanic_booking()
 {
     ob_start();
@@ -18,7 +106,51 @@ function render_mechanic_booking()
             $type_booking = sanitize_text_field($_POST['type_booking']);
             $date = sanitize_text_field($_POST['date']);
             $hour = sanitize_text_field($_POST['hour']);
-            $minutes = sanitize_text_field($_POST['minutes']);
+            $minutes = 30; // Durata fissa di 30 minuti per prenotazioni utente
+
+            // Verifica che l'orario sia ancora disponibile
+            $args = array(
+                'post_type' => 'booking',
+                'posts_per_page' => -1,
+                'meta_query' => array(
+                    'relation' => 'AND',
+                    array(
+                        'key' => '_date',
+                        'value' => $date,
+                        'compare' => '='
+                    ),
+                    array(
+                        'key' => '_place',
+                        'value' => $place,
+                        'compare' => '='
+                    )
+                )
+            );
+            
+            $existing_bookings = get_posts($args);
+            $is_available = true;
+            
+            $new_start = strtotime($hour);
+            $new_end = $new_start + (intval($minutes) * 60);
+            
+            foreach ($existing_bookings as $booking) {
+                $existing_hour = get_post_meta($booking->ID, '_hour', true);
+                $existing_minutes = intval(get_post_meta($booking->ID, '_minutes', true));
+                
+                $existing_start = strtotime($existing_hour);
+                $existing_end = $existing_start + ($existing_minutes * 60);
+                
+                // Controlla sovrapposizione
+                if (!($new_end <= $existing_start || $new_start >= $existing_end)) {
+                    $is_available = false;
+                    break;
+                }
+            }
+            
+            if (!$is_available) {
+                echo '<p style="color: red;">Spiacenti, l\'orario selezionato non è più disponibile. Ricarica la pagina e scegli un altro orario.</p>';
+                return ob_get_clean();
+            }
 
             $booking_data = array(
                 'post_title' => $name,
@@ -53,6 +185,9 @@ function render_mechanic_booking()
         .booking-form-group input, .booking-form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         .booking-btn { background: #0073aa; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; width: 100%; }
         .booking-btn:hover { background: #005177; }
+        select option:disabled { background: #f0f0f0; color: #999; }
+        .time-slot-occupied { background: #ffcccc !important; color: #cc0000 !important; }
+        .loading-message { color: #0073aa; font-style: italic; }
     </style>
 
     <div class="booking-form-box">
@@ -79,11 +214,6 @@ function render_mechanic_booking()
             </div>
 
             <div class="booking-form-group">
-                <label for="modello">Modello Auto *</label>
-                <input type="text" id="modello" name="modello" placeholder="es. Fiat Panda" required>
-            </div>
-
-            <div class="booking-form-group">
                 <label for="type_booking">Intervento Richiesto *</label>
                 <select id="type_booking" name="type_booking" required>
                     <option value="">-- Seleziona --</option>
@@ -96,20 +226,121 @@ function render_mechanic_booking()
 
             <div class="booking-form-group">
                 <label for="date">Data Appuntamento *</label>
-                <input type="date" id="date" name="date" required>
+                <input type="date" id="date" name="date" required min="<?php echo date('Y-m-d'); ?>">
             </div>
+            
             <div class="booking-form-group">
-                <label for="hour">Ora Appuntamento *</label>
-                <input type="hour" id="hour" name="hour" required>
+                <label for="hour">Ora di Arrivo *</label>
+                <select id="hour" name="hour" required disabled>
+                    <option value="">-- Prima seleziona data e sede --</option>
+                </select>
             </div>
-                <div class="booking-form-group">
-                    <label for="minutes">Durata Intervento (minuti) *</label>
-                    <input type="number" id="minutes" name="minutes" min="1" required>
-                </div>
 
             <button type="submit" name="booking_submit" class="booking-btn">Richiedi Appuntamento</button>
         </form>
     </div>
+
+    <script>
+    jQuery(document).ready(function($) {
+        var ajaxurl = '<?php echo admin_url('admin-ajax.php'); ?>';
+        var nonce = '<?php echo wp_create_nonce('booking_availability_nonce'); ?>';
+        
+        // Genera tutti gli orari disponibili (08:00 - 18:00, ogni 30 minuti)
+        function generateTimeSlots() {
+            var slots = [];
+            for (var h = 8; h <= 17; h++) {
+                for (var m = 0; m < 60; m += 30) {
+                    if (h === 17 && m === 30) break; // Stop at 17:30
+                    var hour = h.toString().padStart(2, '0');
+                    var min = m.toString().padStart(2, '0');
+                    slots.push(hour + ':' + min);
+                }
+            }
+            return slots;
+        }
+        
+        // Popola il select dell'ora
+        function populateHourSelect(occupiedSlots) {
+            var $hourSelect = $('#hour');
+            $hourSelect.empty();
+            $hourSelect.append('<option value="">-- Seleziona ora --</option>');
+            
+            var allSlots = generateTimeSlots();
+            occupiedSlots = occupiedSlots || [];
+            
+            allSlots.forEach(function(slot) {
+                var isOccupied = occupiedSlots.indexOf(slot) !== -1;
+                var option = $('<option></option>')
+                    .val(slot)
+                    .text(slot + (isOccupied ? ' (Non disponibile)' : ''));
+                
+                if (isOccupied) {
+                    option.prop('disabled', true);
+                    option.addClass('time-slot-occupied');
+                }
+                
+                $hourSelect.append(option);
+            });
+            
+            $hourSelect.prop('disabled', false);
+        }
+        
+        // Verifica disponibilità quando cambiano data o sede
+        function checkAvailability() {
+            var date = $('#date').val();
+            var place = $('#place').val();
+            
+            if (!date || !place) {
+                $('#hour').prop('disabled', true).empty()
+                    .append('<option value="">-- Prima seleziona data e sede --</option>');
+                return;
+            }
+            
+            // Mostra loading
+            $('#hour').prop('disabled', true).empty()
+                .append('<option value="">Caricamento...</option>');
+            
+            $.ajax({
+                url: ajaxurl,
+                type: 'POST',
+                data: {
+                    action: 'check_booking_availability',
+                    nonce: nonce,
+                    date: date,
+                    place: place
+                },
+                success: function(response) {
+                    if (response.success) {
+                        populateHourSelect(response.data.occupied_slots);
+                    } else {
+                        alert('Errore nel caricamento degli orari disponibili');
+                    }
+                },
+                error: function() {
+                    alert('Errore di comunicazione con il server');
+                }
+            });
+        }
+        
+        // Event listeners
+        $('#date, #place').on('change', checkAvailability);
+        
+        // Disabilita le domeniche e le date passate
+        var today = new Date().toISOString().split('T')[0];
+        $('#date').attr('min', today);
+        
+        $('#date').on('input', function() {
+            var selectedDate = new Date($(this).val());
+            var day = selectedDate.getDay();
+            
+            // Se è domenica (0), mostra alert e resetta
+            if (day === 0) {
+                alert('La domenica l\'officina è chiusa. Seleziona un altro giorno.');
+                $(this).val('');
+            }
+        });
+    });
+    </script>
 
     <?php
     return ob_get_clean();

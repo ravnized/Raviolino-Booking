@@ -6,7 +6,7 @@ function add_meta_box_booking() {
         'booking_details',       
         'Booking Details',        
         'render_meta_box_booking',
-        'appuntamento',                         
+        'booking',                         
         'normal',                                
         'high'                                   
     );
@@ -44,11 +44,6 @@ function render_meta_box_booking( $post ) {
     <div class="booking-row">
         <label for="booking_plate">Targa:</label>
         <input type="text" id="booking_plate" name="booking_plate" value="<?php echo esc_attr( $plate ); ?>" placeholder="es. AB123CD" />
-    </div>
-
-    <div class="booking-row">
-        <label for="booking_model">Modello Auto:</label>
-        <input type="text" id="booking_model" name="booking_model" value="<?php echo esc_attr( $model ); ?>" placeholder="es. Fiat Panda" />
     </div>
 
     <div class="booking-row">
@@ -101,9 +96,6 @@ function save_data_booking( $post_id ) {
     }
     if ( isset( $_POST['booking_plate'] ) ) {
         update_post_meta( $post_id, '_plate', sanitize_text_field( $_POST['booking_plate'] ) );
-    }
-    if ( isset( $_POST['booking_model'] ) ) {
-        update_post_meta( $post_id, '_model', sanitize_text_field( $_POST['booking_model'] ) );
     }
     if ( isset( $_POST['booking_type_booking'] ) ) {
         update_post_meta( $post_id, '_type_booking', sanitize_text_field( $_POST['booking_type_booking'] ) );
