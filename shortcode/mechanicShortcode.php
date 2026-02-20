@@ -111,11 +111,20 @@ function get_booking_dates() {
     
     foreach ($bookings as $booking) {
         $date = get_post_meta($booking->ID, '_date', true);
+        $hour = get_post_meta($booking->ID, '_hour', true);
         
         if (!isset($dates_info[$date])) {
             $dates_info[$date] = 0;
         }
-        $dates_info[$date]++;
+        
+        if (!isset($dates_info[$date]['hours'])) {
+            $dates_info[$date]['hours'] = array();
+        }
+        $dates_info[$date]['hours'][] = $hour;
+        $dates_info[$date]['count'] = isset($dates_info[$date]['count']) ? $dates_info[$date]['count'] + 1 : 1;
+        if ($dates_info[$date]['count'] >= 20) {
+            $dates_info[$date] = -1; // Indica che la data è completamente prenotata
+        }
     }
 
     //error_log('Date info for place ' . $place . ': ' . print_r($dates_info, true));
@@ -223,7 +232,7 @@ function render_mechanic_booking()
                     $('#date').prop('disabled', false);
                     $('#date').off('input').on('input', function() {
                         var selectedDate = $(this).val();
-                        var bookingsCount = datesInfo[selectedDate] || 0;
+                        var bookingsCount = datesInfo[selectedDate] ? datesInfo[selectedDate]['count'] : 0;
                         
                         if (bookingsCount == -1) {
                             alert('La data selezionata è completamente prenotata. Seleziona un\'altra data.');
@@ -232,12 +241,27 @@ function render_mechanic_booking()
                         } else {
                             
                             var startHour = 8;
+                            var endhour1 = 12;
+                            var startHour2 = 14;
                             var endHour = 18;
                             var timeSlots = [];
-                            for (var hour = startHour; hour < endHour; hour++) {
-                                timeSlots.push(hour + ':00');
-                                timeSlots.push(hour + ':30');
+                            for (var hour = startHour; hour < endhour1; hour++) {
+                                if(!datesInfo[selectedDate]['hours'].includes(hour + ':00')) {
+                                    timeSlots.push(hour + ':00');
+                                }
+                                if(!datesInfo[selectedDate]['hours'].includes(hour + ':30')) {
+                                    timeSlots.push(hour + ':30');
+                                }
                             }
+                            for (var hour = startHour2; hour < endHour; hour++) {
+                                if(!datesInfo[selectedDate]['hours'].includes(hour + ':00')) {
+                                    timeSlots.push(hour + ':00');
+                                }
+                                if(!datesInfo[selectedDate]['hours'].includes(hour + ':30')) {
+                                    timeSlots.push(hour + ':30');
+                                }
+                            }
+                            
                             $('#hour').empty().append('<option value="">-- Seleziona l\'ora --</option>').prop('disabled', false);
                             timeSlots.forEach(function(slot) {
                                 $('#hour').append('<option value="' + slot + '">' + slot + '</option>');
