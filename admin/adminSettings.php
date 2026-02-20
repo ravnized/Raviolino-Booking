@@ -1,19 +1,5 @@
 <?php
 
-// Aggiungi la pagina di impostazioni del plugin al menu di amministrazione
-add_action('admin_menu', 'booking_add_admin_page');
-function booking_add_admin_page() {
-    add_menu_page(
-        'Booking - Impostazioni',
-        'Booking',
-        'manage_options',
-        'booking_settings',
-        'booking_render_settings_page',
-        'dashicons-calendar-alt',
-        20
-    );
-}
-
 // Registra le impostazioni
 add_action('admin_init', 'booking_register_settings');
 function booking_register_settings() {
