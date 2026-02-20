@@ -71,12 +71,12 @@ function render_meta_box_booking( $post ) {
 
     <div class="booking-row">
         <label for="booking_hour">Ora Appuntamento:</label>
-        <input type="time" id="booking_hour" name="booking_hour" value="<?php echo esc_attr( $hour ); ?>" />
+        <input type="text" id="booking_hour" name="booking_hour" value="<?php echo esc_attr( $hour ); ?>" placeholder="es. 10" />
     </div>
 
     <div class="booking-row">
-        <label for="booking_minutes">Durata (minuti):</label>
-        <input type="number" id="booking_minutes" name="booking_minutes" value="<?php echo esc_attr( $minutes ); ?>" min="1" />
+        <label for="booking_minutes">Minuti:</label>
+        <input type="number" id="booking_minutes" name="booking_minutes" value="<?php echo esc_attr( $minutes ); ?>" min="0" max="59" />
     </div>
     
     <?php
