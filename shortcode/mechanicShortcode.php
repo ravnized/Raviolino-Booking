@@ -90,7 +90,7 @@ add_action('wp_ajax_nopriv_get_booking_dates', 'get_booking_dates');
 
 function get_booking_dates() {
     check_ajax_referer('booking_availability_nonce', 'nonce');
-    
+    error_log('Received AJAX request for booking dates with place: ' . $_POST['place']);
     $place = sanitize_text_field($_POST['place']);
     
     // Query per trovare tutte le prenotazioni per quella sede
