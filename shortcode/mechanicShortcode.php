@@ -3,6 +3,86 @@
 
 add_shortcode('mechanic_booking', 'render_mechanic_booking');
 
+// AJAX handler per salvare la prenotazione
+add_action('wp_ajax_save_booking', 'ajax_save_booking');
+add_action('wp_ajax_nopriv_save_booking', 'ajax_save_booking');
+
+function ajax_save_booking() {
+    check_ajax_referer('booking_availability_nonce', 'nonce');
+    
+    $name = sanitize_text_field($_POST['name']);
+    $place = sanitize_text_field($_POST['place']);
+    $plate = sanitize_text_field($_POST['plate']);
+    $type_booking = sanitize_text_field($_POST['type_booking']);
+    $date = sanitize_text_field($_POST['date']);
+    $hour = sanitize_text_field($_POST['hour']);
+    $minutes = 30; // Durata fissa di 30 minuti per prenotazioni utente
+
+    // Verifica che l'orario sia ancora disponibile
+    $args = array(
+        'post_type' => 'booking',
+        'posts_per_page' => -1,
+        'meta_query' => array(
+            'relation' => 'AND',
+            array(
+                'key' => '_date',
+                'value' => $date,
+                'compare' => '='
+            ),
+            array(
+                'key' => '_place',
+                'value' => $place,
+                'compare' => '='
+            )
+        )
+    );
+    
+    $existing_bookings = get_posts($args);
+    $is_available = true;
+    
+    $new_start = strtotime($hour);
+    $new_end = $new_start + (intval($minutes) * 60);
+    
+    foreach ($existing_bookings as $booking) {
+        $existing_hour = get_post_meta($booking->ID, '_hour', true);
+        $existing_minutes = intval(get_post_meta($booking->ID, '_minutes', true));
+        
+        $existing_start = strtotime($existing_hour);
+        $existing_end = $existing_start + ($existing_minutes * 60);
+        
+        // Controlla sovrapposizione
+        if (!($new_end <= $existing_start || $new_start >= $existing_end)) {
+            $is_available = false;
+            break;
+        }
+    }
+    
+    if (!$is_available) {
+        wp_send_json_error(array('message' => 'Spiacenti, l\'orario selezionato non è più disponibile. Scegli un altro orario.'));
+        return;
+    }
+
+    $booking_data = array(
+        'post_title' => $name,
+        'post_type' => 'booking',
+        'post_status' => 'publish',
+    );
+
+    $booking_id = wp_insert_post($booking_data);
+
+    if ($booking_id) {
+        update_post_meta($booking_id, '_place', $place);
+        update_post_meta($booking_id, '_plate', $plate);
+        update_post_meta($booking_id, '_type_booking', $type_booking);
+        update_post_meta($booking_id, '_date', $date);
+        update_post_meta($booking_id, '_hour', $hour);
+        update_post_meta($booking_id, '_minutes', $minutes);
+
+        wp_send_json_success(array('message' => 'Prenotazione salvata con successo!'));
+    } else {
+        wp_send_json_error(array('message' => 'Errore durante il salvataggio della prenotazione. Riprova.'));
+    }
+}
 
 // AJAX handler per ottenere le date con prenotazioni
 add_action('wp_ajax_get_booking_dates', 'get_booking_dates');
@@ -47,87 +127,6 @@ function render_mechanic_booking()
 {
     ob_start();
 
-    if (isset($_POST['booking_submit'])) {
-
-        if (!isset($_POST['nonce_front']) || !wp_verify_nonce($_POST['nonce_front'], 'save_booking_front')) {
-            echo '<p style="color: red;">Errore di sicurezza. Riprova.</p>';
-        } else {
-            $name = sanitize_text_field($_POST['name']);
-            $place = sanitize_text_field($_POST['place']);
-            $plate = sanitize_text_field($_POST['plate']);
-            $type_booking = sanitize_text_field($_POST['type_booking']);
-            $date = sanitize_text_field($_POST['date']);
-            $hour = sanitize_text_field($_POST['hour']);
-            $minutes = 30; // Durata fissa di 30 minuti per prenotazioni utente
-
-            // Verifica che l'orario sia ancora disponibile
-            $args = array(
-                'post_type' => 'booking',
-                'posts_per_page' => -1,
-                'meta_query' => array(
-                    'relation' => 'AND',
-                    array(
-                        'key' => '_date',
-                        'value' => $date,
-                        'compare' => '='
-                    ),
-                    array(
-                        'key' => '_place',
-                        'value' => $place,
-                        'compare' => '='
-                    )
-                )
-            );
-            
-            $existing_bookings = get_posts($args);
-            $is_available = true;
-            
-            $new_start = strtotime($hour);
-            $new_end = $new_start + (intval($minutes) * 60);
-            
-            foreach ($existing_bookings as $booking) {
-                $existing_hour = get_post_meta($booking->ID, '_hour', true);
-                $existing_minutes = intval(get_post_meta($booking->ID, '_minutes', true));
-                
-                $existing_start = strtotime($existing_hour);
-                $existing_end = $existing_start + ($existing_minutes * 60);
-                
-                // Controlla sovrapposizione
-                if (!($new_end <= $existing_start || $new_start >= $existing_end)) {
-                    $is_available = false;
-                    break;
-                }
-            }
-            
-            if (!$is_available) {
-                echo '<p style="color: red;">Spiacenti, l\'orario selezionato non è più disponibile. Ricarica la pagina e scegli un altro orario.</p>';
-                return ob_get_clean();
-            }
-
-            $booking_data = array(
-                'post_title' => $name,
-                'post_type' => 'booking',
-                'post_status' => 'publish',
-            );
-
-            $booking_id = wp_insert_post($booking_data);
-
-            if ($booking_id) {
-                update_post_meta($booking_id, '_place', $place);
-                update_post_meta($booking_id, '_plate', $plate);
-                update_post_meta($booking_id, '_type_booking', $type_booking);
-                update_post_meta($booking_id, '_date', $date);
-                update_post_meta($booking_id, '_hour', $hour);
-                update_post_meta($booking_id, '_minutes', $minutes);
-
-                echo '<p class="success-message" style="color: green;">Prenotazione salvata con successo!</p>';
-                return ob_get_clean();
-            } else {
-                echo '<p style="color: red;">Errore durante il salvataggio della prenotazione. Riprova.</p>';
-            }
-        }
-    }
-
     ?>
 
     <style>
@@ -137,14 +136,19 @@ function render_mechanic_booking()
         .booking-form-group input, .booking-form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         .booking-btn { background: #0073aa; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; width: 100%; }
         .booking-btn:hover { background: #005177; }
+        .booking-btn:disabled { background: #ccc; cursor: not-allowed; }
         select option:disabled { background: #f0f0f0; color: #999; }
         .time-slot-occupied { background: #ffcccc !important; color: #cc0000 !important; }
         .loading-message { color: #0073aa; font-style: italic; }
+        .booking-message { max-width: 500px; margin: 20px auto; padding: 15px; border-radius: 4px; text-align: center; display: none; }
+        .booking-message.success { color: #155724; background: #d4edda; border: 1px solid #c3e6cb; }
+        .booking-message.error { color: #721c24; background: #f8d7da; border: 1px solid #f5c6cb; }
     </style>
     
+    <div id="booking-message" class="booking-message"></div>
+    
     <div class="booking-form-box">
-        <form action="" method="POST">
-            <?php wp_nonce_field('save_booking_front', 'nonce_front'); ?>
+        <form id="booking-form" method="POST">
 
             <div class="booking-form-group">
                 <label for="name">Nome e Cognome *</label>
@@ -244,13 +248,6 @@ function render_mechanic_booking()
 
             });
         }
-
-
-
-
-
-
-        
         
         // Event listeners
         $('#place').on('change', checkAvailabilityDate);
@@ -268,6 +265,64 @@ function render_mechanic_booking()
                 alert('La domenica l\'officina è chiusa. Seleziona un altro giorno.');
                 $(this).val('');
             }
+        });
+        
+        // Gestione submit del form via AJAX
+        $('#booking-form').on('submit', function(e) {
+            e.preventDefault();
+            
+            var $form = $(this);
+            var $submitBtn = $form.find('.booking-btn');
+            var $message = $('#booking-message');
+            
+            // Disabilita il bottone e mostra caricamento
+            $submitBtn.prop('disabled', true).text('Invio in corso...');
+            $message.hide();
+            
+            // Raccoglie i dati del form
+            var formData = {
+                action: 'save_booking',
+                nonce: nonce,
+                name: $('#name').val(),
+                place: $('#place').val(),
+                plate: $('#plate').val(),
+                type_booking: $('#type_booking').val(),
+                date: $('#date').val(),
+                hour: $('#hour').val()
+            };
+            
+            // Invia la richiesta AJAX
+            $.post(ajaxurl, formData, function(response) {
+                if (response.success) {
+                    // Mostra messaggio di successo
+                    $message.removeClass('error').addClass('success')
+                        .html('✓ ' + response.data.message)
+                        .fadeIn();
+                    
+                    // Resetta il form
+                    $form[0].reset();
+                    $('#date').prop('disabled', true);
+                    $('#hour').empty().append('<option value="">-- Prima seleziona data e sede --</option>').prop('disabled', true);
+                    
+                    // Scroll al messaggio
+                    $('html, body').animate({
+                        scrollTop: $message.offset().top - 100
+                    }, 500);
+                } else {
+                    // Mostra messaggio di errore
+                    $message.removeClass('success').addClass('error')
+                        .text('✗ ' + response.data.message)
+                        .fadeIn();
+                }
+            }).fail(function() {
+                // Errore di comunicazione
+                $message.removeClass('success').addClass('error')
+                    .text('✗ Errore di comunicazione con il server. Riprova.')
+                    .fadeIn();
+            }).always(function() {
+                // Riabilita il bottone
+                $submitBtn.prop('disabled', false).text('Richiedi Appuntamento');
+            });
         });
     });
     </script>
